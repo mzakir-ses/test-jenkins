@@ -17,16 +17,14 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') { // Match the name configured in Jenkins
                     sh """
-                    ${tool 'SonarScanner'}/bin/sonar-scanner \
+                    /var/jenkins_home/tools/hudson.plugins.sonar.SonarRunnerInstallation/SonarScanner/bin/sonar-scanner \
                     -Dsonar.projectKey=python-project \
                     -Dsonar.projectName="python-project" \
                     -Dsonar.projectVersion=1.0 \
                     -Dsonar.sources=$WORKSPACE \
                     -Dsonar.host.url=$SONAR_HOST_URL \
                     -Dsonar.login=$SONAR_AUTH_TOKEN \
-                    -Dsonar.working.directory=$WORKSPACE/.scannerwork \
-                    -Dsonar.python.version=3.x \
-                    -Dsonar.scm.provider=git
+                    -Dsonar.working.directory=$WORKSPACE/.scannerwork
                     """
                 }
             }
