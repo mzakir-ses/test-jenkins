@@ -31,13 +31,18 @@ pipeline {
             }
         }
 
+
         stage('Wait for Quality Gate') {
             steps {
                 script {
-                    def maxRetries = 10 // Number of attempts
-                    def delay = 5 // Delay between retries (in seconds)
+                    def maxRetries = 30
+                    def delay = 10
                     def taskUrl = "${SONAR_HOST_URL}/api/ce/task?id=${env.SONAR_TASK_ID}"
                     def qualityGateStatus = null
+
+                    if (!env.SONAR_TASK_ID) {
+                        error "SonarQube Task ID is null or not properly set. Ensure the SonarQube analysis stage captures it correctly."
+                    }
 
                     for (int i = 0; i < maxRetries; i++) {
                         def response = sh(
@@ -45,20 +50,27 @@ pipeline {
                             returnStdout: true
                         ).trim()
 
+                        echo "SonarQube API Response: ${response}"
+
                         def jsonResponse = readJSON(text: response)
+                        if (!jsonResponse || !jsonResponse.task) {
+                            error "Failed to parse SonarQube API response or response is empty. Check API response: ${response}"
+                        }
 
                         if (jsonResponse.task.status == "SUCCESS") {
                             def analysisId = jsonResponse.task.analysisId
                             def qualityGateUrl = "${SONAR_HOST_URL}/api/qualitygates/project_status?analysisId=${analysisId}"
+
                             def qualityGateResponse = sh(
                                 script: "curl -u ${SONAR_AUTH_TOKEN}: ${qualityGateUrl}",
                                 returnStdout: true
                             ).trim()
+
                             def qualityGateJson = readJSON(text: qualityGateResponse)
                             qualityGateStatus = qualityGateJson.projectStatus.status
                             break
                         } else if (jsonResponse.task.status == "FAILED") {
-                            error "SonarQube task failed!"
+                            error "SonarQube task failed. Task ID: ${env.SONAR_TASK_ID}"
                         }
 
                         sleep(delay)
@@ -70,6 +82,8 @@ pipeline {
                 }
             }
         }
+
+
 
 
         stage('Build Docker Image') {
