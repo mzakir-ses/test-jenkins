@@ -30,13 +30,35 @@ pipeline {
                 }
             }
         }
-
         stage('Wait for Quality Gate') {
             steps {
                 script {
-                    def qualityGate = waitForQualityGate(timeout: '10')
-                    if (qualityGate.status != 'OK') {
-                        error "Pipeline failed due to Quality Gate failure. Status: ${qualityGate.status}"
+                    def maxRetries = 30 // Number of attempts
+                    def delay = 10 // Delay between retries (in seconds)
+
+                    def taskUrl = "${SONAR_HOST_URL}/api/ce/task?id=${env.SONAR_TASK_ID}"
+                    def qualityGateStatus = null
+
+                    for (int i = 0; i < maxRetries; i++) {
+                        def response = sh(
+                            script: "curl -u ${SONAR_AUTH_TOKEN}: ${taskUrl}",
+                            returnStdout: true
+                        ).trim()
+
+                        def jsonResponse = readJSON(text: response)
+
+                        if (jsonResponse.status == "SUCCESS") {
+                            qualityGateStatus = jsonResponse.analysisStatus
+                            break
+                        } else if (jsonResponse.status == "FAILED") {
+                            error "SonarQube task failed!"
+                        }
+
+                        sleep(delay)
+                    }
+
+                    if (qualityGateStatus != "OK") {
+                        error "Quality Gate failed: ${qualityGateStatus}"
                     }
                 }
             }
