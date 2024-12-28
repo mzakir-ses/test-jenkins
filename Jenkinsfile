@@ -15,10 +15,12 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') { // Ensure 'SonarQube' matches the name in Jenkins config sonarqube server name 
-                    sh 'sonar-scanner -Dsonar.login=$SONAR_AUTH_TOKEN'
+                withSonarQubeEnv('SonarQube') { // Ensure 'SonarQube' matches the name in Jenkins configuration
+                    sh "${tool 'SonarScanner'}/bin/sonar-scanner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_AUTH_TOKEN"
                 }
             }
         }
     }
 }
+
+
