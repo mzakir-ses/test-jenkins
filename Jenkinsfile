@@ -1,25 +1,23 @@
-pipeline {
+\pipeline {
     agent any
 
     environment {
         SONAR_HOST_URL = 'http://sonarqube:9000'
-        SONAR_AUTH_TOKEN = credentials('sonarqube-token') // Replace 'sonarqube-token' with your Jenkins credentials ID
+        SONAR_AUTH_TOKEN = credentials('sonarqube-token') // Replace with your Jenkins credentials ID
     }
 
     stages {
         stage('Checkout') {
             steps {
-                // Clone the repository
                 git branch: 'main', url: 'git@github.com:mzakir-ses/test-jenkins.git'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                // Run SonarScanner
-                withSonarQubeEnv('SonarQube') { // Replace 'SonarQube' with the name configured in Jenkins SonarQube settings
-                    sh '''
-                    $(tool 'SonarScanner')/bin/sonar-scanner \
+                withSonarQubeEnv('SonarQube') { // Match the name configured in Jenkins
+                    sh """
+                    ${tool 'SonarScanner'}/bin/sonar-scanner \
                     -Dsonar.projectKey=python-project \
                     -Dsonar.projectName="python-project" \
                     -Dsonar.projectVersion=1.0 \
@@ -29,7 +27,7 @@ pipeline {
                     -Dsonar.working.directory=$WORKSPACE/.scannerwork \
                     -Dsonar.python.version=3.x \
                     -Dsonar.scm.provider=git
-                    '''
+                    """
                 }
             }
         }
