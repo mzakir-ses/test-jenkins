@@ -61,7 +61,7 @@ pipeline {
                                 -Dsonar.projectName="python-project" \
                                 -Dsonar.projectVersion=1.0 \
                                 -Dsonar.sources=$WORKSPACE \
-                                -Dsonar.inclusions=**/*.py \   
+                                -Dsonar.inclusions=**/*.py \  
                                 -Dsonar.host.url=$SONAR_HOST_URL \
                                 -Dsonar.login=$SONAR_AUTH_TOKEN \
                                 -Dsonar.working.directory=$WORKSPACE/.scannerwork
