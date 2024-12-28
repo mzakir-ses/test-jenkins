@@ -14,22 +14,61 @@ pipeline {
             }
         }
 
+        // stage('SonarQube Analysis') {
+        //     steps {
+        //         withSonarQubeEnv('SonarQube') { // Match the name configured in Jenkins
+        //             sh """
+        //             /var/jenkins_home/tools/hudson.plugins.sonar.SonarRunnerInstallation/SonarScanner/bin/sonar-scanner \
+        //             -Dsonar.projectKey=python-project \
+        //             -Dsonar.projectName="python-project" \
+        //             -Dsonar.projectVersion=1.0 \
+        //             -Dsonar.sources=$WORKSPACE \
+        //             -Dsonar.host.url=$SONAR_HOST_URL \
+        //             -Dsonar.login=$SONAR_AUTH_TOKEN \
+        //             -Dsonar.working.directory=$WORKSPACE/.scannerwork
+        //             """
+        //         }
+        //     }
+        // }
+
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') { // Match the name configured in Jenkins
-                    sh """
-                    /var/jenkins_home/tools/hudson.plugins.sonar.SonarRunnerInstallation/SonarScanner/bin/sonar-scanner \
-                    -Dsonar.projectKey=python-project \
-                    -Dsonar.projectName="python-project" \
-                    -Dsonar.projectVersion=1.0 \
-                    -Dsonar.sources=$WORKSPACE \
-                    -Dsonar.host.url=$SONAR_HOST_URL \
-                    -Dsonar.login=$SONAR_AUTH_TOKEN \
-                    -Dsonar.working.directory=$WORKSPACE/.scannerwork
-                    """
+                    script {
+                        def scannerOutput = sh(
+                            script: """
+                                /var/jenkins_home/tools/hudson.plugins.sonar.SonarRunnerInstallation/SonarScanner/bin/sonar-scanner \
+                                -Dsonar.projectKey=python-project \
+                                -Dsonar.projectName="python-project" \
+                                -Dsonar.projectVersion=1.0 \
+                                -Dsonar.sources=$WORKSPACE \
+                                -Dsonar.host.url=$SONAR_HOST_URL \
+                                -Dsonar.login=$SONAR_AUTH_TOKEN \
+                                -Dsonar.working.directory=$WORKSPACE/.scannerwork
+                            """,
+                            returnStdout: true
+                        ).trim()
+
+                        echo "SonarQube Scanner Output: ${scannerOutput}"
+
+                        // Extract the SonarQube Task ID
+                        def taskIdMatch = scannerOutput =~ /task\?id=([a-z0-9-]+)/
+
+                        if (taskIdMatch) {
+                            env.SONAR_TASK_ID = taskIdMatch[0][1]
+                            echo "Captured SonarQube Task ID: ${env.SONAR_TASK_ID}"
+                        } else {
+                            error "Failed to capture SonarQube Task ID from scanner output."
+                        }
+                    }
                 }
             }
         }
+
+
+
+
 
 
         stage('Wait for Quality Gate') {
