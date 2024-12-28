@@ -61,11 +61,11 @@ pipeline {
                                 -Dsonar.projectName="python-project" \
                                 -Dsonar.projectVersion=1.0 \
                                 -Dsonar.sources=$WORKSPACE \
-                                -Dsonar.inclusions=**/*.py \  
+                                -Dsonar.inclusions=**/*.py \
                                 -Dsonar.host.url=$SONAR_HOST_URL \
                                 -Dsonar.login=$SONAR_AUTH_TOKEN \
                                 -Dsonar.working.directory=$WORKSPACE/.scannerwork
-                            """,
+                            """.stripIndent(),
                             returnStdout: true
                         ).trim()
 
@@ -73,7 +73,6 @@ pipeline {
 
                         // Extract the SonarQube Task ID
                         def taskIdMatch = scannerOutput =~ /task\?id=([a-z0-9-]+)/
-
                         if (taskIdMatch) {
                             env.SONAR_TASK_ID = taskIdMatch[0][1]
                             echo "Captured SonarQube Task ID: ${env.SONAR_TASK_ID}"
@@ -84,6 +83,7 @@ pipeline {
                 }
             }
         }
+
 
 
         stage('Wait for Quality Gate') {
