@@ -41,8 +41,10 @@ pipeline {
         stage('Scan Docker Image with Trivy') {
             steps {
                 sh """
-                # Pull the Trivy image
-                docker run --rm aquasec/trivy:latest image $DOCKER_IMAGE_NAME:latest
+                # Run Trivy to scan the built Docker image
+                docker run --rm \
+                    -v /var/run/docker.sock:/var/run/docker.sock \
+                    aquasec/trivy:latest image $DOCKER_IMAGE_NAME:latest
                 """
             }
         }
