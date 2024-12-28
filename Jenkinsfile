@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SONAR_HOST_URL = 'http://sonarqube:9000'
-        SONAR_AUTH_TOKEN = credentials('sonarqube-token') // Replace 'sonar-auth-token' with your credential ID
+        SONAR_AUTH_TOKEN = credentials('sonarqube-token') // Replace 'sonar-auth-token' with the ID you used for credential
     }
 
     stages {
@@ -15,10 +15,10 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('SonarQube') { // Matches the SonarQube server configuration in Jenkins
+                withSonarQubeEnv('SonarQube') { // Ensure 'SonarQube' matches the name in Jenkins configuration
                     sh '''
                     #!/bin/bash
-                    ${tool 'SonarScanner'}/bin/sonar-scanner \
+                    "${tool 'SonarScanner'}/bin/sonar-scanner" \
                     -Dsonar.host.url=$SONAR_HOST_URL \
                     -Dsonar.login=$SONAR_AUTH_TOKEN
                     '''
