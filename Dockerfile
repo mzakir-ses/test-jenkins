@@ -4,6 +4,7 @@
 # FROM python:3.11-slim-bullseye 3.12-alpine⁠
 
 FROM python:3.12-slim
+# FROM python:latest
 
 # Set the working directory
 WORKDIR /usr/src/app

@@ -38,39 +38,39 @@ pipeline {
                 """
             }
         }
-        // stage('Scan Docker Image with Trivy') {
-        //     steps {
-        //         sh """
-        //         # Run Trivy to scan the built Docker image
-        //         docker run --rm \
-        //             -v /var/run/docker.sock:/var/run/docker.sock \
-        //             aquasec/trivy:latest image $DOCKER_IMAGE_NAME:latest
-        //         """
-        //     }
-        // }
-
         stage('Scan Docker Image with Trivy') {
             steps {
-                script {
-                    // Run Trivy and fail the pipeline if critical vulnerabilities are found
-                    def scanResult = sh(
-                        script: """
-                        docker run --rm \
-                            -v /var/run/docker.sock:/var/run/docker.sock \
-                            aquasec/trivy:latest image \
-                            --severity CRITICAL \
-                            --exit-code 1 \
-                            $DOCKER_IMAGE_NAME:latest
-                        """,
-                        returnStatus: true
-                    )
-                    
-                    if (scanResult != 0) {
-                        error "Trivy found critical vulnerabilities in the Docker image!"
-                    }
-                }
+                sh """
+                # Run Trivy to scan the built Docker image
+                docker run --rm \
+                    -v /var/run/docker.sock:/var/run/docker.sock \
+                    aquasec/trivy:latest image $DOCKER_IMAGE_NAME:latest
+                """
             }
         }
+
+        // stage('Scan Docker Image with Trivy') {
+        //     steps {
+        //         script {
+        //             // Run Trivy and fail the pipeline if critical vulnerabilities are found
+        //             def scanResult = sh(
+        //                 script: """
+        //                 docker run --rm \
+        //                     -v /var/run/docker.sock:/var/run/docker.sock \
+        //                     aquasec/trivy:latest image \
+        //                     --severity CRITICAL \
+        //                     --exit-code 1 \
+        //                     $DOCKER_IMAGE_NAME:latest
+        //                 """,
+        //                 returnStatus: true
+        //             )
+                    
+        //             if (scanResult != 0) {
+        //                 error "Trivy found critical vulnerabilities in the Docker image!"
+        //             }
+        //         }
+        //     }
+        // }
 
     }
     post {
