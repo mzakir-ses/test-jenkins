@@ -31,16 +31,17 @@ pipeline {
             }
         }
 
-       stage('Wait for Quality Gate') {
+        stage('Wait for Quality Gate') {
             steps {
                 script {
-                    def qualityGate = waitForQualityGate()
+                    def qualityGate = waitForQualityGate(timeout: '10')
                     if (qualityGate.status != 'OK') {
-                        error "Pipeline failed due to Quality Gate failure: ${qualityGate.status}"
+                        error "Pipeline failed due to Quality Gate failure. Status: ${qualityGate.status}"
                     }
                 }
             }
         }
+
 
         stage('Build Docker Image') {
             steps {
