@@ -17,19 +17,37 @@ pipeline {
         // stage('SonarQube Analysis') {
         //     steps {
         //         withSonarQubeEnv('SonarQube') { // Match the name configured in Jenkins
-        //             sh """
-        //             /var/jenkins_home/tools/hudson.plugins.sonar.SonarRunnerInstallation/SonarScanner/bin/sonar-scanner \
-        //             -Dsonar.projectKey=python-project \
-        //             -Dsonar.projectName="python-project" \
-        //             -Dsonar.projectVersion=1.0 \
-        //             -Dsonar.sources=$WORKSPACE \
-        //             -Dsonar.host.url=$SONAR_HOST_URL \
-        //             -Dsonar.login=$SONAR_AUTH_TOKEN \
-        //             -Dsonar.working.directory=$WORKSPACE/.scannerwork
-        //             """
+        //             script {
+        //                 def scannerOutput = sh(
+        //                     script: """
+        //                         /var/jenkins_home/tools/hudson.plugins.sonar.SonarRunnerInstallation/SonarScanner/bin/sonar-scanner \
+        //                         -Dsonar.projectKey=python-project \
+        //                         -Dsonar.projectName="python-project" \
+        //                         -Dsonar.projectVersion=1.0 \
+        //                         -Dsonar.sources=$WORKSPACE \
+        //                         -Dsonar.host.url=$SONAR_HOST_URL \
+        //                         -Dsonar.login=$SONAR_AUTH_TOKEN \
+        //                         -Dsonar.working.directory=$WORKSPACE/.scannerwork
+        //                     """,
+        //                     returnStdout: true
+        //                 ).trim()
+
+        //                 echo "SonarQube Scanner Output: ${scannerOutput}"
+
+        //                 // Extract the SonarQube Task ID
+        //                 def taskIdMatch = scannerOutput =~ /task\?id=([a-z0-9-]+)/
+
+        //                 if (taskIdMatch) {
+        //                     env.SONAR_TASK_ID = taskIdMatch[0][1]
+        //                     echo "Captured SonarQube Task ID: ${env.SONAR_TASK_ID}"
+        //                 } else {
+        //                     error "Failed to capture SonarQube Task ID from scanner output."
+        //                 }
+        //             }
         //         }
         //     }
         // }
+
 
 
         stage('SonarQube Analysis') {
@@ -43,6 +61,7 @@ pipeline {
                                 -Dsonar.projectName="python-project" \
                                 -Dsonar.projectVersion=1.0 \
                                 -Dsonar.sources=$WORKSPACE \
+                                -Dsonar.inclusions=**/*.py \   // Include only Python files
                                 -Dsonar.host.url=$SONAR_HOST_URL \
                                 -Dsonar.login=$SONAR_AUTH_TOKEN \
                                 -Dsonar.working.directory=$WORKSPACE/.scannerwork
@@ -67,14 +86,10 @@ pipeline {
         }
 
 
-
-
-
-
         stage('Wait for Quality Gate') {
             steps {
                 script {
-                    def maxRetries = 30
+                    def maxRetries = 10
                     def delay = 10
                     def taskUrl = "${SONAR_HOST_URL}/api/ce/task?id=${env.SONAR_TASK_ID}"
                     def qualityGateStatus = null
@@ -142,29 +157,6 @@ pipeline {
                 """
             }
         }
-
-        // stage('Scan Docker Image with Trivy') {
-        //     steps {
-        //         script {
-        //             // Run Trivy and fail the pipeline if critical vulnerabilities are found
-        //             def scanResult = sh(
-        //                 script: """
-        //                 docker run --rm \
-        //                     -v /var/run/docker.sock:/var/run/docker.sock \
-        //                     aquasec/trivy:latest image \
-        //                     --severity CRITICAL \
-        //                     --exit-code 1 \
-        //                     $DOCKER_IMAGE_NAME:latest
-        //                 """,
-        //                 returnStatus: true
-        //             )
-                    
-        //             if (scanResult != 0) {
-        //                 error "Trivy found critical vulnerabilities in the Docker image!"
-        //             }
-        //         }
-        //     }
-        // }
 
     }
     post {
