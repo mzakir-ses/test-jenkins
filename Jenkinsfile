@@ -18,8 +18,7 @@ pipeline {
             steps {
                 // Run SonarScanner
                 withSonarQubeEnv('SonarQube') { // Replace 'SonarQube' with the name configured in Jenkins SonarQube settings
-                    sh """
-                    #!/bin/bash
+                    sh '''
                     $(tool 'SonarScanner')/bin/sonar-scanner \
                     -Dsonar.projectKey=python-project \
                     -Dsonar.projectName="python-project" \
@@ -30,7 +29,7 @@ pipeline {
                     -Dsonar.working.directory=$WORKSPACE/.scannerwork \
                     -Dsonar.python.version=3.x \
                     -Dsonar.scm.provider=git
-                    """
+                    '''
                 }
             }
         }
