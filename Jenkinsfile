@@ -4,6 +4,7 @@ pipeline {
     environment {
         SONAR_HOST_URL = 'http://sonarqube:9000'
         SONAR_AUTH_TOKEN = credentials('sonarqube-token') // Replace with your Jenkins credentials ID
+        DOCKER_IMAGE_NAME = 'python-project-image'
     }
 
     stages {
@@ -28,6 +29,21 @@ pipeline {
                     """
                 }
             }
+        }
+        stage('Build Docker Image') {
+            steps {
+                sh """
+                docker build -t $DOCKER_IMAGE_NAME:latest $WORKSPACE
+                """
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed.'
         }
     }
 }
