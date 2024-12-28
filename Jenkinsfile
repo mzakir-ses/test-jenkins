@@ -17,6 +17,7 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') { // Matches the SonarQube server configuration in Jenkins
                     sh '''
+                    #!/bin/bash
                     ${tool 'SonarScanner'}/bin/sonar-scanner \
                     -Dsonar.host.url=$SONAR_HOST_URL \
                     -Dsonar.login=$SONAR_AUTH_TOKEN
