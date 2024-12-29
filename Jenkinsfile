@@ -50,6 +50,25 @@ pipeline {
 
 
 
+        stage('Install Dependencies') {
+            steps {
+                sh 'pip install -r requirements.txt'
+                sh 'pip install pytest pytest-cov'
+            }
+        }
+
+        stage('Run Tests and Generate Coverage') {
+            steps {
+                script {
+                    // Run unit tests and generate coverage report
+                    sh """
+                        pytest --cov=./ --cov-report=xml:coverage.xml --cov-report=html:coverage-html
+                    """
+                }
+            }
+        }
+
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') { // Match the name configured in Jenkins
@@ -64,6 +83,7 @@ pipeline {
                                 -Dsonar.inclusions=**/*.py \
                                 -Dsonar.host.url=$SONAR_HOST_URL \
                                 -Dsonar.login=$SONAR_AUTH_TOKEN \
+                                -Dsonar.python.coverage.reportPaths=$WORKSPACE/coverage.xml \
                                 -Dsonar.working.directory=$WORKSPACE/.scannerwork
                             """.stripIndent(),
                             returnStdout: true
@@ -83,6 +103,46 @@ pipeline {
                 }
             }
         }
+
+
+
+
+
+
+
+        // stage('SonarQube Analysis') {
+        //     steps {
+        //         withSonarQubeEnv('SonarQube') { // Match the name configured in Jenkins
+        //             script {
+        //                 def scannerOutput = sh(
+        //                     script: """
+        //                         /var/jenkins_home/tools/hudson.plugins.sonar.SonarRunnerInstallation/SonarScanner/bin/sonar-scanner \
+        //                         -Dsonar.projectKey=python-project \
+        //                         -Dsonar.projectName="python-project" \
+        //                         -Dsonar.projectVersion=1.0 \
+        //                         -Dsonar.sources=$WORKSPACE \
+        //                         -Dsonar.inclusions=**/*.py \
+        //                         -Dsonar.host.url=$SONAR_HOST_URL \
+        //                         -Dsonar.login=$SONAR_AUTH_TOKEN \
+        //                         -Dsonar.working.directory=$WORKSPACE/.scannerwork
+        //                     """.stripIndent(),
+        //                     returnStdout: true
+        //                 ).trim()
+
+        //                 echo "SonarQube Scanner Output: ${scannerOutput}"
+
+        //                 // Extract the SonarQube Task ID
+        //                 def taskIdMatch = scannerOutput =~ /task\?id=([a-z0-9-]+)/
+        //                 if (taskIdMatch) {
+        //                     env.SONAR_TASK_ID = taskIdMatch[0][1]
+        //                     echo "Captured SonarQube Task ID: ${env.SONAR_TASK_ID}"
+        //                 } else {
+        //                     error "Failed to capture SonarQube Task ID from scanner output."
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
 
 
