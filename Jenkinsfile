@@ -120,38 +120,31 @@ pipeline {
 
         stage('Get Code Coverage and Validate') {
             steps {
-                script {
-                    // Securely pass secrets via the environment variable
-                    withEnv(["AUTH_HEADER=Authorization: Basic ${SONAR_AUTH_TOKEN}".bytes.encodeBase64().toString()]) {
-                        def coverageResponse = sh(
+                withCredentials([string(credentialsId: 'SONAR_AUTH_TOKEN_ID', variable: 'SONAR_AUTH_TOKEN')]) {
+                    script {
+                        def qualityGateResponse = sh(
                             script: """
-                                curl -s -H "$AUTH_HEADER" \
-                                "${SONAR_HOST_URL}/api/measures/component?component=python-project&metricKeys=coverage"
+                                curl -s -u $SONAR_AUTH_TOKEN: \
+                                "${SONAR_HOST_URL}/api/qualitygates/project_status?analysisId=${analysisId}"
                             """,
                             returnStdout: true
                         ).trim()
 
-                        echo "SonarQube API Response: ${coverageResponse}"
+                        echo "SonarQube API Response: ${qualityGateResponse}"
 
-                        // Parse the API response using readJSON
-                        def coverageJson = readJSON text: coverageResponse
+                        def qualityGateJson = readJSON(text: qualityGateResponse)
+                        def qualityGateStatus = qualityGateJson.projectStatus.status
 
-                        // Extract the coverage percentage
-                        def coverage = coverageJson?.component?.measures?.find { it.metric == "coverage" }?.value
-                        if (!coverage) {
-                            error "Failed to fetch code coverage from SonarQube. Response: ${coverageResponse}"
-                        }
+                        echo "Quality Gate Status: ${qualityGateStatus}"
 
-                        echo "Code Coverage: ${coverage}%"
-
-                        // Validate coverage
-                        if (coverage.toFloat() < 80) {
-                            error "Code coverage is below 80%: ${coverage}%"
+                        if (qualityGateStatus != 'OK') {
+                            error "Quality Gate failed: ${qualityGateStatus}"
                         }
                     }
                 }
             }
         }
+
 
 
 
