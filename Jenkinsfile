@@ -48,34 +48,46 @@ pipeline {
         //     }
         // }
 
-        stage('Install Python') {
+        // stage('Install Python') {
+        //     steps {
+        //         sh '''
+        //             apt-get update
+        //             apt-get install -y python3 python3-pip
+        //         '''
+        //     }
+        // }
+
+
+
+        // stage('Install Dependencies') {
+        //     steps {
+        //         sh 'pip install -r requirements.txt'
+        //         sh 'pip install pytest pytest-cov'
+        //     }
+        // }
+
+        // stage('Run Tests and Generate Coverage') {
+        //     steps {
+        //         script {
+        //             // Run unit tests and generate coverage report
+        //             sh """
+        //                 pytest --cov=./ --cov-report=xml:coverage.xml --cov-report=html:coverage-html
+        //             """
+        //         }
+        //     }
+        // }
+
+
+        stage('Run Tests') {
             steps {
                 sh '''
-                    apt-get update
-                    apt-get install -y python3 python3-pip
+                    pip install -r requirements.txt
+                    pytest --cov=. --cov-report=xml:${WORKSPACE}/coverage.xml --cov-report=html:${WORKSPACE}/coverage-html
                 '''
             }
         }
 
 
-
-        stage('Install Dependencies') {
-            steps {
-                sh 'pip install -r requirements.txt'
-                sh 'pip install pytest pytest-cov'
-            }
-        }
-
-        stage('Run Tests and Generate Coverage') {
-            steps {
-                script {
-                    // Run unit tests and generate coverage report
-                    sh """
-                        pytest --cov=./ --cov-report=xml:coverage.xml --cov-report=html:coverage-html
-                    """
-                }
-            }
-        }
 
 
         stage('SonarQube Analysis') {
