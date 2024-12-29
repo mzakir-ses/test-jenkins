@@ -121,24 +121,41 @@ pipeline {
         stage('Get Code Coverage and Validate') {
             steps {
                 script {
-                    // Fetch coverage using SonarQube API
-                    def coverage = sh(
-                        script: """
-                            curl -s -u ${SONAR_AUTH_TOKEN}: ${SONAR_HOST_URL}/api/measures/component?component=python-project&metricKeys=coverage | \
-                            python3 -c "import sys, json; print(json.load(sys.stdin)['component']['measures'][0]['value'])"
-                        """,
-                        returnStdout: true
-                    ).trim()
-                    
-                    echo "Code Coverage: ${coverage}%"
+                    // Securely pass secrets via the environment variable
+                    withEnv(["AUTH_HEADER=Authorization: Basic ${SONAR_AUTH_TOKEN}".bytes.encodeBase64().toString()]) {
+                        def coverageResponse = sh(
+                            script: """
+                                curl -s -H "$AUTH_HEADER" \
+                                "${SONAR_HOST_URL}/api/measures/component?component=python-project&metricKeys=coverage"
+                            """,
+                            returnStdout: true
+                        ).trim()
 
-                    // Validate code coverage
-                    if (coverage.toFloat() < 80) {
-                        error "Code coverage is below 80%: ${coverage}%"
+                        echo "SonarQube API Response: ${coverageResponse}"
+
+                        // Parse the API response using readJSON
+                        def coverageJson = readJSON text: coverageResponse
+
+                        // Extract the coverage percentage
+                        def coverage = coverageJson?.component?.measures?.find { it.metric == "coverage" }?.value
+                        if (!coverage) {
+                            error "Failed to fetch code coverage from SonarQube. Response: ${coverageResponse}"
+                        }
+
+                        echo "Code Coverage: ${coverage}%"
+
+                        // Validate coverage
+                        if (coverage.toFloat() < 80) {
+                            error "Code coverage is below 80%: ${coverage}%"
+                        }
                     }
                 }
             }
         }
+
+
+
+
 
         stage('Build Docker Image') {
             steps {
