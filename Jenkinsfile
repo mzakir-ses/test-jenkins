@@ -81,17 +81,15 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh '''
-                    docker exec python-env bash -c "
-                    python3 -m venv .venv &&
-                    . .venv/bin/activate &&
-                    pip install --upgrade pip &&
-                    pip install -r requirements.txt &&
-                    pip install pytest-cov &&
-                    pytest --cov=. --cov-report=xml:coverage.xml --cov-report=html:coverage-html"
+                    python3 -m venv .venv
+                    . .venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                    pip install pytest-cov 
+                    pytest --cov=. --cov-report=xml:coverage.xml --cov-report=html:coverage-html
                 '''
             }
         }
-
 
 
 
