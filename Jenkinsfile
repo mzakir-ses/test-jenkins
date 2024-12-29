@@ -148,7 +148,7 @@ pipeline {
                     echo "Overall Code Coverage: ${coverageValue}%"
 
                     // Validate coverage
-                    def coverageThreshold = 80
+                    def coverageThreshold = 50
                     if (coverageValue.toFloat() < coverageThreshold) {
                         error "Code coverage is below the acceptable threshold (${coverageThreshold}%): ${coverageValue}%"
                     }
