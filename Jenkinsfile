@@ -117,6 +117,47 @@ pipeline {
             }
         }
 
+
+        stage('Get Code Coverage') {
+            steps {
+                script {
+                    def coverageValue = null
+                    def coverageUrl = "${SONAR_HOST_URL}/api/measures/component?component=python-project&metricKeys=coverage"
+
+                    // Fetch the coverage metric
+                    def coverageResponse = sh(
+                        script: "curl -s -u ${SONAR_AUTH_TOKEN}: ${coverageUrl}",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "SonarQube Coverage API Response: ${coverageResponse}"
+
+                    // Parse the response to extract the coverage value
+                    def coverageJson = readJSON(text: coverageResponse)
+                    if (coverageJson?.component?.measures) {
+                        coverageValue = coverageJson.component.measures.find { it.metric == "coverage" }?.value
+                    }
+
+                    if (coverageValue == null) {
+                        error "Failed to fetch coverage value from SonarQube. Response: ${coverageResponse}"
+                    }
+
+                    echo "Overall Code Coverage: ${coverageValue}%"
+
+                    // Validate coverage
+                    def coverageThreshold = 80
+                    if (coverageValue.toFloat() < coverageThreshold) {
+                        error "Code coverage is below the acceptable threshold (${coverageThreshold}%): ${coverageValue}%"
+                    }
+                }
+            }
+        }
+
+
+
+
+
+
         stage('Build Docker Image') {
             steps {
                 sh """
