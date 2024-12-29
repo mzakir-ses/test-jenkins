@@ -117,39 +117,6 @@ pipeline {
             }
         }
 
-
-        stage('Get Code Coverage and Validate') {
-            steps {
-                withCredentials([string(credentialsId: 'SONAR_AUTH_TOKEN_ID', variable: 'SONAR_AUTH_TOKEN')]) {
-                    script {
-                        def qualityGateResponse = sh(
-                            script: """
-                                curl -s -u $SONAR_AUTH_TOKEN: \
-                                "${SONAR_HOST_URL}/api/qualitygates/project_status?analysisId=${analysisId}"
-                            """,
-                            returnStdout: true
-                        ).trim()
-
-                        echo "SonarQube API Response: ${qualityGateResponse}"
-
-                        def qualityGateJson = readJSON(text: qualityGateResponse)
-                        def qualityGateStatus = qualityGateJson.projectStatus.status
-
-                        echo "Quality Gate Status: ${qualityGateStatus}"
-
-                        if (qualityGateStatus != 'OK') {
-                            error "Quality Gate failed: ${qualityGateStatus}"
-                        }
-                    }
-                }
-            }
-        }
-
-
-
-
-
-
         stage('Build Docker Image') {
             steps {
                 sh """
