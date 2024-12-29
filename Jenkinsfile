@@ -5,6 +5,7 @@ pipeline {
         SONAR_HOST_URL = 'http://sonarqube:9000'
         SONAR_AUTH_TOKEN = credentials('sonarqube-token') // Replace with your Jenkins credentials ID
         DOCKER_IMAGE_NAME = 'python-project-image'
+        SONAR_AUTH_TOKEN_USER ='squ_a6139f40f16d7a8a6325567eb503e22b2d991983'
     }
 
     stages {
@@ -128,7 +129,7 @@ pipeline {
 
                     // Fetch the coverage metric
                     def coverageResponse = sh(
-                        script: "curl -s -u ${SONAR_AUTH_TOKEN}: '${coverageUrl}'",
+                        script: "curl -s -u ${SONAR_AUTH_TOKEN_USER}: '${coverageUrl}'",
                         returnStdout: true
                     ).trim()
 
