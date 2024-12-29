@@ -118,6 +118,8 @@ pipeline {
         }
 
 
+
+
         stage('Get Code Coverage') {
             steps {
                 script {
@@ -126,7 +128,7 @@ pipeline {
 
                     // Fetch the coverage metric
                     def coverageResponse = sh(
-                        script: "curl -s -u ${SONAR_AUTH_TOKEN}: ${coverageUrl}",
+                        script: "curl -s -u ${SONAR_AUTH_TOKEN}: '${coverageUrl}'",
                         returnStdout: true
                     ).trim()
 
@@ -152,6 +154,7 @@ pipeline {
                 }
             }
         }
+
 
 
 
