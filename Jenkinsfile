@@ -86,68 +86,13 @@ pipeline {
 
 
 
-        // stage('Wait for Quality Gate') {
-        //     steps {
-        //         script {
-        //             def maxRetries = 10
-        //             def delay = 10
-        //             def taskUrl = "${SONAR_HOST_URL}/api/ce/task?id=${env.SONAR_TASK_ID}"
-        //             def qualityGateStatus = null
-
-        //             if (!env.SONAR_TASK_ID) {
-        //                 error "SonarQube Task ID is null or not properly set. Ensure the SonarQube analysis stage captures it correctly."
-        //             }
-
-        //             for (int i = 0; i < maxRetries; i++) {
-        //                 def response = sh(
-        //                     script: "curl -u ${SONAR_AUTH_TOKEN}: ${taskUrl}",
-        //                     returnStdout: true
-        //                 ).trim()
-
-        //                 echo "SonarQube API Response: ${response}"
-
-        //                 def jsonResponse = readJSON(text: response)
-        //                 if (!jsonResponse || !jsonResponse.task) {
-        //                     error "Failed to parse SonarQube API response or response is empty. Check API response: ${response}"
-        //                 }
-
-        //                 if (jsonResponse.task.status == "SUCCESS") {
-        //                     def analysisId = jsonResponse.task.analysisId
-        //                     def qualityGateUrl = "${SONAR_HOST_URL}/api/qualitygates/project_status?analysisId=${analysisId}"
-
-        //                     def qualityGateResponse = sh(
-        //                         script: "curl -u ${SONAR_AUTH_TOKEN}: ${qualityGateUrl}",
-        //                         returnStdout: true
-        //                     ).trim()
-
-        //                     def qualityGateJson = readJSON(text: qualityGateResponse)
-        //                     qualityGateStatus = qualityGateJson.projectStatus.status
-        //                     break
-        //                 } else if (jsonResponse.task.status == "FAILED") {
-        //                     error "SonarQube task failed. Task ID: ${env.SONAR_TASK_ID}"
-        //                 }
-
-        //                 sleep(delay)
-        //             }
-
-        //             if (qualityGateStatus != "OK") {
-        //                 error "Quality Gate failed: ${qualityGateStatus}"
-        //             }
-        //         }
-        //     }
-        // }
-
-
-
-
         stage('Wait for Quality Gate') {
             steps {
                 script {
                     def maxRetries = 10
                     def delay = 10
                     def taskUrl = "${SONAR_HOST_URL}/api/ce/task?id=${env.SONAR_TASK_ID}"
-                    def coverageStatus = null
-                    def coverageValue = null
+                    def qualityGateStatus = null
 
                     if (!env.SONAR_TASK_ID) {
                         error "SonarQube Task ID is null or not properly set. Ensure the SonarQube analysis stage captures it correctly."
@@ -168,7 +113,7 @@ pipeline {
 
                         if (jsonResponse.task.status == "SUCCESS") {
                             def analysisId = jsonResponse.task.analysisId
-                            def qualityGateUrl = "${SONAR_HOST_URL}/api/measures/component_tree?component=${analysisId}&metricKeys=coverage"
+                            def qualityGateUrl = "${SONAR_HOST_URL}/api/qualitygates/project_status?analysisId=${analysisId}"
 
                             def qualityGateResponse = sh(
                                 script: "curl -u ${SONAR_AUTH_TOKEN}: ${qualityGateUrl}",
@@ -176,19 +121,7 @@ pipeline {
                             ).trim()
 
                             def qualityGateJson = readJSON(text: qualityGateResponse)
-                            
-                            // Extract the code coverage metric
-                            def measures = qualityGateJson.component.measures.find { it.metric == 'coverage' }
-                            coverageValue = measures?.value ?: "0.0"
-
-                            // Assuming a coverage threshold of 80%
-                            if (coverageValue.toFloat() >= 80.0) {
-                                echo "Code coverage is sufficient: ${coverageValue}%"
-                                coverageStatus = "OK"
-                            } else {
-                                echo "Code coverage is insufficient: ${coverageValue}%"
-                                coverageStatus = "FAILED"
-                            }
+                            qualityGateStatus = qualityGateJson.projectStatus.status
                             break
                         } else if (jsonResponse.task.status == "FAILED") {
                             error "SonarQube task failed. Task ID: ${env.SONAR_TASK_ID}"
@@ -197,12 +130,79 @@ pipeline {
                         sleep(delay)
                     }
 
-                    if (coverageStatus != "OK") {
-                        error "Code coverage check failed: ${coverageValue}%"
+                    if (qualityGateStatus != "OK") {
+                        error "Quality Gate failed: ${qualityGateStatus}"
                     }
                 }
             }
         }
+
+
+
+
+        // stage('Wait for Quality Gate') {
+        //     steps {
+        //         script {
+        //             def maxRetries = 10
+        //             def delay = 10
+        //             def taskUrl = "${SONAR_HOST_URL}/api/ce/task?id=${env.SONAR_TASK_ID}"
+        //             def coverageStatus = null
+        //             def coverageValue = null
+
+        //             if (!env.SONAR_TASK_ID) {
+        //                 error "SonarQube Task ID is null or not properly set. Ensure the SonarQube analysis stage captures it correctly."
+        //             }
+
+        //             for (int i = 0; i < maxRetries; i++) {
+        //                 def response = sh(
+        //                     script: "curl -u ${SONAR_AUTH_TOKEN}: ${taskUrl}",
+        //                     returnStdout: true
+        //                 ).trim()
+
+        //                 echo "SonarQube API Response: ${response}"
+
+        //                 def jsonResponse = readJSON(text: response)
+        //                 if (!jsonResponse || !jsonResponse.task) {
+        //                     error "Failed to parse SonarQube API response or response is empty. Check API response: ${response}"
+        //                 }
+
+        //                 if (jsonResponse.task.status == "SUCCESS") {
+        //                     def analysisId = jsonResponse.task.analysisId
+        //                     def qualityGateUrl = "${SONAR_HOST_URL}/api/measures/component_tree?component=${analysisId}&metricKeys=coverage"
+
+        //                     def qualityGateResponse = sh(
+        //                         script: "curl -u ${SONAR_AUTH_TOKEN}: ${qualityGateUrl}",
+        //                         returnStdout: true
+        //                     ).trim()
+
+        //                     def qualityGateJson = readJSON(text: qualityGateResponse)
+                            
+        //                     // Extract the code coverage metric
+        //                     def measures = qualityGateJson.component.measures.find { it.metric == 'coverage' }
+        //                     coverageValue = measures?.value ?: "0.0"
+
+        //                     // Assuming a coverage threshold of 80%
+        //                     if (coverageValue.toFloat() >= 80.0) {
+        //                         echo "Code coverage is sufficient: ${coverageValue}%"
+        //                         coverageStatus = "OK"
+        //                     } else {
+        //                         echo "Code coverage is insufficient: ${coverageValue}%"
+        //                         coverageStatus = "FAILED"
+        //                     }
+        //                     break
+        //                 } else if (jsonResponse.task.status == "FAILED") {
+        //                     error "SonarQube task failed. Task ID: ${env.SONAR_TASK_ID}"
+        //                 }
+
+        //                 sleep(delay)
+        //             }
+
+        //             if (coverageStatus != "OK") {
+        //                 error "Code coverage check failed: ${coverageValue}%"
+        //             }
+        //         }
+        //     }
+        // }
 
 
 
